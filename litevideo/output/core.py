@@ -149,6 +149,77 @@ modes_dw = {
 }
 
 
+class Crop (Module):
+    """Timing Generator
+
+    Generates the H/V timings of a frame.
+    """
+    def __init__(self):
+        self.sink = sink = stream.Endpoint(frame_parameter_layout)
+        self.source = source = stream.Endpoint(frame_timing_layout)
+
+        # # #
+
+        hactive = Signal()
+        vactive = Signal()
+        active = Signal()
+
+        hcounter = Signal(hbits)
+        vcounter = Signal(vbits)
+
+        self.comb += [
+            If(sink.valid,
+                active.eq(hactive & vactive),
+                source.valid.eq(1),
+                If(active,
+                    source.de.eq(1),
+                )
+            ),
+            sink.ready.eq(source.ready & source.last)
+        ]
+
+        self.sync += \
+            If(~sink.valid,
+                hactive.eq(0),
+                vactive.eq(0),
+                hcounter.eq(0),
+                vcounter.eq(0)
+            ).Elif(source.ready,
+                source.last.eq(0),
+                hcounter.eq(hcounter + 1),
+
+                If(hcounter == 0, hactive.eq(1)),
+                If(hcounter == sink.hres, hactive.eq(0)),
+                If(hcounter == sink.hsync_start, source.hsync.eq(1)),
+                If(hcounter == sink.hsync_end, source.hsync.eq(0)),
+                If(hcounter == sink.hscan,
+                    hcounter.eq(0),
+                    If(vcounter == sink.vscan,
+                        vcounter.eq(0),
+                        source.last.eq(1)
+                    ).Else(
+                        vcounter.eq(vcounter + 1)
+                    )
+                ),
+
+                If(vcounter == 0, vactive.eq(1)),
+                If(vcounter == sink.vres, vactive.eq(0)),
+                If(vcounter == sink.vsync_start, source.vsync.eq(1)),
+                If(vcounter == sink.vsync_end, source.vsync.eq(0))
+            )
+		
+		If(hcounter >== 90 , stream.data),
+		If(hcounter <== sink.hres - 90 , stream.data),
+		If(vcounter >== 70 , stream.data),
+		If(vcounter >== sink.vres - 70 , stream.data).Else(stream.data.eq(0))
+modes_dw = {
+    "raw":      32,
+    "rgb":      24,
+    "ycbcr422": 16
+}
+
+
+
 class VideoOutCore(Module, AutoCSR):
     """Video out core
 
