@@ -102,10 +102,10 @@ class TimingGenerator(Module):
 
         self.comb += [
             If(sink.valid,
-                active.eq(hactive & vactive),
+                active.eq(hactive & vactive), 'active == 1 when hactive ==1 & vactive==1)'
                 source.valid.eq(1),
                 If(active,
-                    source.de.eq(1),
+                    source.de.eq(1), 'data is enabled when active is true '
                 )
             ),
             sink.ready.eq(source.ready & source.last)
@@ -120,9 +120,9 @@ class TimingGenerator(Module):
             ).Elif(source.ready,
                 source.last.eq(0),
                 hcounter.eq(hcounter + 1),
-
-                If(hcounter == 0, hactive.eq(1)),
-                If(hcounter == sink.hres, hactive.eq(0)),
+		'Trying to manipulate hcounters to crop 50 pixels '
+                If(hcounter == 50, hactive.eq(1)),'hactive == 1 i.e data is enabled when hcounter is 50 , below that value screen blacks out'
+                If(hcounter == sink.hres-50, hactive.eq(0)),'hactive==0 i.e data is disabled when hcounter reaches value of hres-50'
                 If(hcounter == sink.hsync_start, source.hsync.eq(1)),
                 If(hcounter == sink.hsync_end, source.hsync.eq(0)),
                 If(hcounter == sink.hscan,
@@ -135,8 +135,8 @@ class TimingGenerator(Module):
                     )
                 ),
 
-                If(vcounter == 0, vactive.eq(1)),
-                If(vcounter == sink.vres, vactive.eq(0)),
+                If(vcounter == 50, vactive.eq(1)),
+                If(vcounter == sink.vres -50, vactive.eq(0)),
                 If(vcounter == sink.vsync_start, source.vsync.eq(1)),
                 If(vcounter == sink.vsync_end, source.vsync.eq(0))
             )
