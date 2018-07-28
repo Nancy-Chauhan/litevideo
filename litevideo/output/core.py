@@ -130,7 +130,7 @@ class TimingGenerator(Module):
     def __init__(self, genlock_stream=None):
         self.sink = sink = stream.Endpoint(frame_parameter_layout)   # "inputs" are the parameter layout (via CSR via initiator)
         self.source = source = stream.Endpoint(frame_timing_layout)  # "outputs" are a frame timing layout
-
+''''
         # # #
         if genlock_stream == None:
             hactive = Signal()
@@ -182,7 +182,7 @@ class TimingGenerator(Module):
                 )
         else:
             self.comb += genlock_stream.connect(self.source)
-
+'''''
 
 
 modes_dw = {
